@@ -16,12 +16,14 @@ all relevant code for finetuning on data collected with the microphone and laser
 the steps are as follows:
 - move the dataset(s) into `egs/robomic/data/<>`
 - run the preparation script for each dataset: ``, specify the number of folds and split ratio  for your train dataset. The preprocess script will create wav files for each fragment, sampled at 16kHz, and also create json files for each sensor type. Splits are created using stratified sampling to ensure datasets are balanced.
-- get the meand and std deviation of the entire training datset for each sensor type. Use the `src/get_norm_stats.py` script. Add these values to the `run_<sensor>.sh` scripts to ensure proper normalization of the 
+- get the meand and std deviation of the entire training datset for each sensor type. Use the `src/get_norm_stats.py` script. Add these values to the `run.sh` scripts to ensure proper normalization of the spectrograms.
 - if you want to modify the object categories: also update the `robomic_categories.csv`file accordingly, the MID names are random, an artifact of the audioset pretraining in the codebase.
-- train for a sensor type by running: `bash run_laser.sh` or `bash run_mic.sh`. update the params as needed, in particular the location of the train and validation json files. Refer to the orginal readme for more information on the training procedure.
-- validate the model on a dataset
+- train for a sensor type by running: `CUDA_VISIBLE_DEVICES=0, bash train.sh  --sensor_type mic --dataset-dir ./data/icra2025-v0/`. Refer to the orginal readme for more information on the training procedure.
+This will output a K-fold accuracy and std deviation as well as model checkpoints.
+- validate the model on a dataset: `CUDA_VISIBLE_DEVICES=0, python test.py --ckpt exp/test-robomic-mic-20250220_173728/fold0/models/best_audio_model.pth --json data/icra2025-v0/robomic_val_mic_fold_0.json --labels_csv data/robomic_categories.csv`
 
 
+good intro to DL for audio: https://huggingface.co/learn/audio-course/en/chapter1/audio_data
 
 ----
 original readme:
