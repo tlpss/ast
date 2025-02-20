@@ -83,12 +83,14 @@ class SpectrogramCalculator:
         with open(recorded_file, "wb") as f:
             pickle.dump(spectrogram, f)
 
-    def encode_as_wav(self):
-        waveform = torch.tensor(self.data).unsqueeze(0).float()
-        
+    def encode_as_wav(self,sample_freq=16000):
+        waveform = self.resample_time_signal(self.data, self.fs, sample_freq)
+
+        waveform = torch.tensor(waveform).unsqueeze(0).float()
+
         # normalize waveform to -1, 1
         waveform = (waveform - waveform.min()) / (waveform.max() - waveform.min())
         waveform = waveform * 2 - 1
         # save as wav
-        torchaudio.save(os.path.join(self.data_directory, f'{self.file_name}.wav'), waveform, int(self.fs))
+        torchaudio.save(os.path.join(self.data_directory, f'{self.file_name}.wav'), waveform, int(sample_freq))
 
