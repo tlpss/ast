@@ -11,19 +11,34 @@ import torch
 import numpy as np
 
 import dataloader
+import argparse
 
-# set skip_norm as True only when you are computing the normalization stats
-audio_conf = {'num_mel_bins': 128, 'target_length': 1024, 'freqm': 24, 'timem': 192, 'mixup': 0.5, 'skip_norm': True, 'mode': 'train', 'dataset': 'audioset'}
 
-train_loader = torch.utils.data.DataLoader(
-    dataloader.AudiosetDataset('/data/sls/scratch/yuangong/audioset/datafiles/balanced_train_data.json', label_csv='/data/sls/scratch/yuangong/audioset/utilities/class_labels_indices.csv',
-                                audio_conf=audio_conf), batch_size=1000, shuffle=False, num_workers=8, pin_memory=True)
-mean=[]
-std=[]
-for i, (audio_input, labels) in enumerate(train_loader):
-    cur_mean = torch.mean(audio_input)
-    cur_std = torch.std(audio_input)
-    mean.append(cur_mean)
-    std.append(cur_std)
-    print(cur_mean, cur_std)
-print(np.mean(mean), np.mean(std))
+
+
+def main(datafile, label_csv, batch_size, num_workers):
+    audio_conf = {'num_mel_bins': 64, 'target_length': 1024, 'freqm': 0, 'timem': 0, 'mixup': 0.0, 'skip_norm': True, 'mode': 'train', 'dataset': 'blabla'}
+
+    train_loader = torch.utils.data.DataLoader(
+        dataloader.AudiosetDataset(datafile, label_csv=label_csv, audio_conf=audio_conf), 
+        batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
+    
+    mean = []
+    std = []
+    for i, (audio_input, labels) in enumerate(train_loader):
+        cur_mean = torch.mean(audio_input)
+        cur_std = torch.std(audio_input)
+        mean.append(cur_mean)
+        std.append(cur_std)
+        print(cur_mean, cur_std)
+    print(np.mean(mean), np.mean(std))
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Get normalization stats for input spectrogram")
+    parser.add_argument('--datafile', type=str, required=True, help='Path to the datafile')
+    parser.add_argument('--label_csv', type=str, required=True, help='Path to the label CSV file')
+    parser.add_argument('--batch_size', type=int, default=1000, help='Batch size for DataLoader')
+    parser.add_argument('--num_workers', type=int, default=8, help='Number of workers for DataLoader')
+    
+    args = parser.parse_args()
+    main(args.datafile, args.label_csv, args.batch_size, args.num_workers)

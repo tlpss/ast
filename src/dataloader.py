@@ -8,7 +8,7 @@
 # modified from:
 # Author: David Harwath
 # with some functions borrowed from https://github.com/SeanNaren/deepspeech.pytorch
-
+import os 
 import csv
 import json
 import torchaudio
@@ -65,6 +65,12 @@ class AudiosetDataset(Dataset):
         with open(dataset_json_file, 'r') as fp:
             data_json = json.load(fp)
 
+        # get the absolute path 
+        abs_json_file = os.path.abspath(dataset_json_file)
+        self.data_dir = os.path.dirname(abs_json_file)
+        # prepend "/"
+        self.data_dir = os.path.join('/', self.data_dir)
+
         self.data = data_json['data']
         self.audio_conf = audio_conf
         print('---------------the {:s} dataloader---------------'.format(self.audio_conf.get('mode')))
@@ -97,6 +103,10 @@ class AudiosetDataset(Dataset):
 
     def _wav2fbank(self, filename, filename2=None):
         # mixup
+        # get abs paths
+        filename = os.path.join(self.data_dir, filename)
+        if filename2 != None:
+            filename2 = os.path.join(self.data_dir, filename2)
         if filename2 == None:
             waveform, sr = torchaudio.load(filename)
             waveform = waveform - waveform.mean()
@@ -176,6 +186,7 @@ class AudiosetDataset(Dataset):
         # if not do mixup
         else:
             datum = self.data[index]
+            print(datum['wav'])
             label_indices = np.zeros(self.label_num)
             fbank, mix_lambda = self._wav2fbank(datum['wav'])
             for label_str in datum['labels'].split(','):
