@@ -17,7 +17,7 @@ import argparse
 
 
 def main(datafile, label_csv, batch_size, num_workers):
-    audio_conf = {'num_mel_bins': 64, 'target_length': 1024, 'freqm': 0, 'timem': 0, 'mixup': 0.0, 'skip_norm': True, 'mode': 'train', 'dataset': 'blabla'}
+    audio_conf = {'num_mel_bins': 128, 'target_length': 1100, 'freqm': 0, 'timem': 0, 'mixup': 0.0, 'skip_norm': True, 'mode': 'train', 'dataset': 'blabla'}
 
     train_loader = torch.utils.data.DataLoader(
         dataloader.AudiosetDataset(datafile, label_csv=label_csv, audio_conf=audio_conf), 

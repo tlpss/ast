@@ -186,7 +186,6 @@ class AudiosetDataset(Dataset):
         # if not do mixup
         else:
             datum = self.data[index]
-            print(datum['wav'])
             label_indices = np.zeros(self.label_num)
             fbank, mix_lambda = self._wav2fbank(datum['wav'])
             for label_str in datum['labels'].split(','):
