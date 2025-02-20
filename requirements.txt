@@ -8,9 +8,12 @@ scikit-learn==0.24.2
 scipy==1.6.3
 scikit-learn
 timm==0.4.5
-torch==1.8.1
-torchaudio==0.8.1
-torchvision
+# torch==1.9.1
+# torchaudio==0.9.1
+# torchvision==0.10.1
+# need to install with cuda 11 for RTX GPU!
+# pip install torch==1.9.1+cu111 torchvision==0.10.1+cu111 torchaudio==0.9.1 -f https://download.pytorch.org/whl/torch_stable.html
+# cf https://pytorch.org/get-started/previous-versions/#v191
 wget==3.2
 zipp==3.4.1
 tqdm

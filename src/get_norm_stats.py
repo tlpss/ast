@@ -30,15 +30,15 @@ def main(datafile, label_csv, batch_size, num_workers):
         cur_std = torch.std(audio_input)
         mean.append(cur_mean)
         std.append(cur_std)
-        print(cur_mean, cur_std)
-    print(np.mean(mean), np.mean(std))
+    print(f"Mean: {np.mean(mean)}")
+    print(f"Std: {np.mean(std)}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Get normalization stats for input spectrogram")
     parser.add_argument('--datafile', type=str, required=True, help='Path to the datafile')
     parser.add_argument('--label_csv', type=str, required=True, help='Path to the label CSV file')
-    parser.add_argument('--batch_size', type=int, default=1000, help='Batch size for DataLoader')
-    parser.add_argument('--num_workers', type=int, default=8, help='Number of workers for DataLoader')
+    parser.add_argument('--batch_size', type=int, default=16, help='Batch size for DataLoader')
+    parser.add_argument('--num_workers', type=int, default=4, help='Number of workers for DataLoader')
     
     args = parser.parse_args()
     main(args.datafile, args.label_csv, args.batch_size, args.num_workers)

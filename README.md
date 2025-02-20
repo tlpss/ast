@@ -1,3 +1,30 @@
+## installation
+
+- `conda create -n ast python=3.9` #3.9 is needed for dependencies..
+- `pip install torch==1.9.1+cu111 torchvision==0.10.1+cu111 torchaudio==0.9.1 -f https://download.pytorch.org/whl/torch_stable.html` to install the appropriate version of torch with cuda11 (needed for RTX30XX GPUS)
+- `pip install -r requirements.txt` to install the other requirements
+
+
+## RoboMic 
+
+We use this codebase to train classifiers for 'sound' fragments of a robot shaking a cup, with the goal of identifying what was in the cup. 
+In particular we are comparing 2 sensors: a microphone and a laser-interferometer. 
+
+
+all relevant code for finetuning on data collected with the microphone and laser sensor is located in `egs/robomic`.
+
+the steps are as follows:
+- move the dataset(s) into `egs/robomic/data/<>`
+- run the preparation script for each dataset: ``, specify the number of folds and split ratio  for your train dataset. The preprocess script will create wav files for each fragment, sampled at 16kHz, and also create json files for each sensor type. Splits are created using stratified sampling to ensure datasets are balanced.
+- get the meand and std deviation of the entire training datset for each sensor type. Use the `src/get_norm_stats.py` script. Add these values to the `run_<sensor>.sh` scripts to ensure proper normalization of the 
+- if you want to modify the object categories: also update the `robomic_categories.csv`file accordingly, the MID names are random, an artifact of the audioset pretraining in the codebase.
+- train for a sensor type by running: `bash run_laser.sh` or `bash run_mic.sh`. update the params as needed, in particular the location of the train and validation json files. Refer to the orginal readme for more information on the training procedure.
+- validate the model on a dataset
+
+
+
+----
+original readme:
 
 # AST: Audio Spectrogram Transformer  
  - [News](#News)
