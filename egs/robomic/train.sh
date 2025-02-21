@@ -48,13 +48,13 @@ fi
 dataset=robomic-${sensor_type}
 model=ast
 
-imagenetpretrain=False
-audiosetpretrain=False
-num_mel_bins=64
+# imagenetpretrain=False
+# audiosetpretrain=False
+# num_mel_bins=64
 
-# imagenetpretrain=True
-# audiosetpretrain=True
-# num_mel_bins=128
+imagenetpretrain=True
+audiosetpretrain=True
+num_mel_bins=128
 
 bal=none
 if [ $audiosetpretrain == True ]
@@ -105,7 +105,7 @@ do
   --freqm $freqm --timem $timem --mixup ${mixup} --bal ${bal} \
   --tstride $tstride --fstride $fstride --imagenet_pretrain $imagenetpretrain --audioset_pretrain $audiosetpretrain \
   --metrics ${metrics} --loss ${loss} --warmup ${warmup} --lrscheduler_start ${lrscheduler_start} --lrscheduler_step ${lrscheduler_step} --lrscheduler_decay ${lrscheduler_decay} \
-  --dataset_mean ${dataset_mean} --dataset_std ${dataset_std} --audio_length ${audio_length} --noise ${noise}
+  --dataset_mean ${dataset_mean} --dataset_std ${dataset_std} --audio_length ${audio_length} --noise ${noise} --seed $((2025+${fold}))
 done
 
 python ./get_robomic_result.py --exp_path ${base_exp_dir}

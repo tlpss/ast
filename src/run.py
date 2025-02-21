@@ -12,6 +12,7 @@ import pickle
 import sys
 import time
 import torch
+import random 
 from torch.utils.data import WeightedRandomSampler
 basepath = os.path.dirname(os.path.dirname(sys.path[0]))
 sys.path.append(basepath)
@@ -23,6 +24,7 @@ from traintest import train, validate
 print("I am process %s, running on %s: starting (%s)" % (os.getpid(), os.uname()[1], time.asctime()))
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument("--seed",type=int, default=2025, help="random seed")
 parser.add_argument("--data-train", type=str, default='', help="training data json")
 parser.add_argument("--data-val", type=str, default='', help="validation data json")
 parser.add_argument("--data-eval", type=str, default='', help="evaluation data json")
@@ -97,6 +99,12 @@ parser.add_argument('--wa_end', type=int, default=5, help="which epoch to end we
 #
 
 args = parser.parse_args()
+
+
+# set random seed
+torch.manual_seed(args.seed)
+np.random.seed(args.seed)
+random.seed(args.seed)
 
 
 if args.num_mel_bins != 128 and args.audioset_pretrain:
