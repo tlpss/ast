@@ -52,6 +52,7 @@ parser.add_argument("--fstride", type=int, default=10, help="soft split freq str
 parser.add_argument("--tstride", type=int, default=10, help="soft split time stride, overlap=patch_size-stride")
 parser.add_argument('--imagenet_pretrain', help='if use ImageNet pretrained audio spectrogram transformer model', type=ast.literal_eval, default='True')
 parser.add_argument('--audioset_pretrain', help='if use ImageNet and audioset pretrained audio spectrogram transformer model', type=ast.literal_eval, default='False')
+parser.add_argument("--num_mel_bins", type=int, default=128, help="number of mel bins")
 
 parser.add_argument("--dataset_mean", type=float, default=-4.2677393, help="the dataset spectrogram mean")
 parser.add_argument("--dataset_std", type=float, default=4.5689974, help="the dataset spectrogram std")
@@ -97,6 +98,10 @@ parser.add_argument('--wa_end', type=int, default=5, help="which epoch to end we
 
 args = parser.parse_args()
 
+
+if args.num_mel_bins != 128 and args.audioset_pretrain:
+    print(f"Warning: the number of mel bins is {args.num_mel_bins}, but the model is pretrained on 128 mel bins, make sure this is what you want")
+
 # transformer based model
 if args.model == 'ast':
     print('now train a audio spectrogram transformer model')
@@ -108,9 +113,9 @@ if args.model == 'ast':
     # # if add noise for data augmentation, only use for speech commands
     # noise = {'audioset': False, 'esc50': False, 'speechcommands':True}
 
-    audio_conf = {'num_mel_bins': 128, 'target_length': args.audio_length, 'freqm': args.freqm, 'timem': args.timem, 'mixup': args.mixup, 'dataset': args.dataset, 'mode':'train', 'mean':args.dataset_mean, 'std':args.dataset_std,
+    audio_conf = {'num_mel_bins': args.num_mel_bins, 'target_length': args.audio_length, 'freqm': args.freqm, 'timem': args.timem, 'mixup': args.mixup, 'dataset': args.dataset, 'mode':'train', 'mean':args.dataset_mean, 'std':args.dataset_std,
                   'noise':args.noise}
-    val_audio_conf = {'num_mel_bins': 128, 'target_length': args.audio_length, 'freqm': 0, 'timem': 0, 'mixup': 0, 'dataset': args.dataset, 'mode':'evaluation', 'mean':args.dataset_mean, 'std':args.dataset_std, 'noise':False}
+    val_audio_conf = {'num_mel_bins': args.num_mel_bins, 'target_length': args.audio_length, 'freqm': 0, 'timem': 0, 'mixup': 0, 'dataset': args.dataset, 'mode':'evaluation', 'mean':args.dataset_mean, 'std':args.dataset_std, 'noise':False}
 
     if args.bal == 'bal':
         print('balanced sampler is being used')
@@ -130,7 +135,7 @@ if args.model == 'ast':
         dataloader.AudiosetDataset(args.data_val, label_csv=args.label_csv, audio_conf=val_audio_conf),
         batch_size=args.batch_size*2, shuffle=False, num_workers=args.num_workers, pin_memory=True)
 
-    audio_model = models.ASTModel(label_dim=args.n_class, fstride=args.fstride, tstride=args.tstride, input_fdim=128,
+    audio_model = models.ASTModel(label_dim=args.n_class, fstride=args.fstride, tstride=args.tstride, input_fdim=args.num_mel_bins,
                                   input_tdim=args.audio_length, imagenet_pretrain=args.imagenet_pretrain,
                                   audioset_pretrain=args.audioset_pretrain, model_size='base384')
 

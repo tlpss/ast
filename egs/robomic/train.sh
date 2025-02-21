@@ -27,7 +27,7 @@ done
 
 # Default values if not provided
 sensor_type=${sensor_type:-mic}
-dataset_dir=${dataset_dir:-./data/icra2025-v0}
+dataset_dir=${dataset_dir:-./data/icra2025-v1}
 
 echo "Sensor type: ${sensor_type}"
 echo "Dataset directory: ${dataset_dir}"
@@ -36,19 +36,25 @@ echo "Dataset directory: ${dataset_dir}"
 # python ../../src/get_norm_stats.py --datafile data/icra2025-v0/robomic_all_mic.json --label_csv data/robomic_categories.csv 
 if [ ${sensor_type} == 'mic' ]
 then
-  dataset_mean=-5.44
-  dataset_std=4.28
+  dataset_mean=-4.99
+  dataset_std=2.815
 
 else
   # laser data statistics
-  dataset_mean=-0.99
-  dataset_std=2.59
+  dataset_mean=-1.17
+  dataset_std=2.42
 fi
 
 dataset=robomic-${sensor_type}
 model=ast
-imagenetpretrain=True
-audiosetpretrain=True
+
+imagenetpretrain=False
+audiosetpretrain=False
+num_mel_bins=64
+
+# imagenetpretrain=True
+# audiosetpretrain=True
+# num_mel_bins=128
 
 bal=none
 if [ $audiosetpretrain == True ]
@@ -60,7 +66,7 @@ fi
 freqm=48
 timem=10
 mixup=0.5
-epoch=15
+epoch=10
 batch_size=4
 fstride=10
 tstride=10
@@ -71,7 +77,7 @@ noise=False
 metrics=acc
 loss=CE
 warmup=False
-lrscheduler_start=5
+lrscheduler_start=3
 lrscheduler_step=1
 lrscheduler_decay=0.85
 
