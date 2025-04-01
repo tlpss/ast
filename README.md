@@ -1,3 +1,11 @@
+# Spectrogram classification 
+This codebase is part of an [ICRA 2025 workshop paper](https://github.com/RemkoPr/icra2025-SMI-tactile-sensing). 
+
+We use this codebase to train classifiers for 'sound' fragments of a robot shaking a cup, with the goal of identifying what was in the cup. The sound data either comes from a microphone or from an SMI-laser sensor.
+
+See the paper for more details.
+
+
 ## installation
 
 - `conda create -n ast python=3.9` #3.9 is needed for dependencies..
@@ -14,22 +22,44 @@ In particular we are comparing 2 sensors: a microphone and a laser-interferomete
 all relevant code for finetuning on data collected with the microphone and laser sensor is located in `egs/robomic`.
 
 the steps are as follows:
-- move the dataset(s) into `egs/robomic/data/<>`
+- move the dataset(s) into `egs/robomic/data/<>your-dataset-dir`
 
-- run the preparation script for each dataset: `prepare_dataset.ipynb`, specify the number of folds and split ratio  for your train dataset. The preprocess script will create wav files for each fragment, sampled at 16kHz, and also create json files for each sensor type. Splits are created using stratified sampling to ensure datasets are balanced.
+- run the preparation script for each dataset: `prepare_dataset.ipynb`, specify the number of folds and split ratio  for your train dataset, set this to zero for the test datasets. The preprocess script will create wav files for each fragment, sampled at 16kHz, and also create json files for each sensor type. Splits are created using stratified sampling to ensure datasets are balanced.
 
 - get the meand and std deviation of the entire training datset for each sensor type. Use the `src/get_norm_stats.py` script. Add these values to the `train.sh` scripts to ensure proper normalization of the spectrograms.
 - if you want to modify the object categories: also update the `robomic_categories.csv`file accordingly, the MID names are random, an artifact of the audioset pretraining in the codebase.
 
-- train for a sensor type by running: `CUDA_VISIBLE_DEVICES=0, bash train.sh  --sensor_type mic --dataset-dir ./data/icra2025-v1/`. Refer to the orginal readme for more information on the training procedure.
-This will output a K-fold accuracy and std deviation as well as model checkpoints.
+- train for a sensor type by running: `CUDA_VISIBLE_DEVICES=0, bash train.sh  --sensor_type <mic/laser> --dataset-dir <your-dataset-path>`. Refer to the orginal readme for more information on the training procedure.
+This script will output a K-fold accuracy and std deviation an store the model checkpoints.
 
-- validate on all datasets: `CUDA_VISIBLE_DEVICES=0, python test_all_datasets.py --mic  /home/tlips/Documents/ast/egs/robomic/exp/test-robomic-mic-20250221_094511/ --laser /home/tlips/Documents/ast/egs/robomic/exp/test-robomic-laser-20250221_095326`
+- validate on all datasets using this command: `CUDA_VISIBLE_DEVICES=0, python test_all_datasets.py --mic <your-checkpoint-dir>  --laser <your-checkpoint-dir>`
+
 
 - **deprecated** ~~validate the model on a dataset: `CUDA_VISIBLE_DEVICES=0, python test.py --ckpt exp/test-robomic-mic-20250220_173728/fold0/models/best_audio_model.pth --json data/icra2025-v0/robomic_val_mic_fold_0.json --labels_csv data/robomic_categories.csv`~~
 
 
 good intro to DL for audio: https://huggingface.co/learn/audio-course/en/chapter1/audio_data
+
+### reproducing ICRA 2025 workshop results
+
+This codebase is part of an [ICRA 2025 workshop paper](https://github.com/RemkoPr/icra2025-SMI-tactile-sensing). To reproduce the experiments, follows these steps:
+
+- get the data from [here]() and download to `robomic/data`
+
+- train and evaluate using: 
+
+```bash
+# train mic
+CUDA_VISIBLE_DEVICES=0, bash train.sh --snesor_type mic --dataset-dir ./data/icra2025-multiclass-v1
+
+# train laser
+CUDA_VISIBLE_DEVICES=0, bash train.sh --snesor_type laser --dataset-dir ./data/icra2025-multiclass-v1
+
+# eval 
+CUDA_VISIBLE_DEVICES=0, python test_all_datasets.py --mic <experiment-dir-mic>  --laser <experiment-dir-laser>
+```
+
+- or evaluate on pretrained checkpoints by downloading them from [here]() into `robomic/exp` and then running `CUDA_VISIBLE_DEVICES=0, python test_all_datasets.py --mic /home/tlips/Documents/ast/egs/robomic/exp/test-robomic-laser-20250325_100351  --laser egs/robomic/exp/test-robomic-laser-20250325_100351`
 
 ----
 original readme:
