@@ -24,7 +24,7 @@ the steps are as follows:
 - train for a sensor type by running: `CUDA_VISIBLE_DEVICES=0, bash train.sh  --sensor_type mic --dataset-dir ./data/icra2025-v1/`. Refer to the orginal readme for more information on the training procedure.
 This will output a K-fold accuracy and std deviation as well as model checkpoints.
 
-- validate on all datasets: `UDA_VISIBLE_DEVICES=0, python test_all_datasets.py --mic  /home/tlips/Documents/ast/egs/robomic/exp/test-robomic-mic-20250221_094511/fold0/models/best_audio_model.pth --laser /home/tlips/Documents/ast/egs/robomic/exp/test-robomic-laser-20250221_095326/fold0/models/best_audio_model.pth`
+- validate on all datasets: `CUDA_VISIBLE_DEVICES=0, python test_all_datasets.py --mic  /home/tlips/Documents/ast/egs/robomic/exp/test-robomic-mic-20250221_094511/ --laser /home/tlips/Documents/ast/egs/robomic/exp/test-robomic-laser-20250221_095326`
 
 - **deprecated** ~~validate the model on a dataset: `CUDA_VISIBLE_DEVICES=0, python test.py --ckpt exp/test-robomic-mic-20250220_173728/fold0/models/best_audio_model.pth --json data/icra2025-v0/robomic_val_mic_fold_0.json --labels_csv data/robomic_categories.csv`~~
 

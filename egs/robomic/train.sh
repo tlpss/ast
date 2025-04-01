@@ -15,6 +15,10 @@
 # export TORCH_HOME=../../pretrained_models
 
 
+# only use RTX3090 on paard workstation
+# comment this line if you want to use multiple GPUs
+export CUDA_VISIBLE_DEVICES=0,
+
 # Parse command line arguments
 while [[ "$#" -gt 0 ]]; do
   case $1 in
@@ -36,13 +40,13 @@ echo "Dataset directory: ${dataset_dir}"
 # python ../../src/get_norm_stats.py --datafile data/icra2025-v0/robomic_all_mic.json --label_csv data/robomic_categories.csv 
 if [ ${sensor_type} == 'mic' ]
 then
-  dataset_mean=-4.99
-  dataset_std=2.815
+  dataset_mean=-6.32
+  dataset_std=2.77
 
 else
   # laser data statistics
-  dataset_mean=-1.17
-  dataset_std=2.42
+  dataset_mean=-0.74
+  dataset_std=2.46
 fi
 
 dataset=robomic-${sensor_type}
@@ -100,7 +104,7 @@ do
 
   CUDA_CACHE_DISABLE=1 python -W ignore ../../src/run.py --model ${model} --dataset ${dataset} \
   --data-train ${tr_data} --data-val ${te_data} --exp-dir $exp_dir \
-  --label-csv ./data/robomic_categories.csv --n_class 2 \
+  --label-csv ./data/robomic_categories.csv --n_class 3 \
   --lr $lr --n-epochs ${epoch} --batch-size $batch_size --save_model False \
   --freqm $freqm --timem $timem --mixup ${mixup} --bal ${bal} \
   --tstride $tstride --fstride $fstride --imagenet_pretrain $imagenetpretrain --audioset_pretrain $audiosetpretrain \

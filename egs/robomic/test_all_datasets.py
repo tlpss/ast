@@ -16,15 +16,21 @@ from traintest import validate
 
 file_path = pathlib.Path(__file__)
 DATA_DIR = file_path.parent / "data" 
-DISTURBANCE_NOISE_ARMSTRONG = DATA_DIR / "icra2025-disturbances" / "noise" / "armstrong"
-DISTURBANCE_NOISE_RED_HOT_CHILLIPEPPERS = DATA_DIR / "icra2025-disturbances" / "noise" / "red_hot_chillipeppers"
-DISTURBANCE_NOISE_SKRILLEX = DATA_DIR / "icra2025-disturbances" / "noise" / "skrillex"
-DISTURBANCE_NOISE_WHITE_NOISE = DATA_DIR / "icra2025-disturbances" / "noise" / "white_noise"
+DISTURBANCE_NOISE_ARMSTRONG = DATA_DIR / "icra2025-multiclass-v1-disturbances" / "noise" / "armstrong"
+DISTURBANCE_NOISE_RED_HOT_CHILLIPEPPERS = DATA_DIR / "icra2025-multiclass-v1-disturbances" / "noise" / "red_hot_chillipeppers"
+DISTURBANCE_NOISE_SKRILLEX = DATA_DIR / "icra2025-multiclass-v1-disturbances" / "noise" / "skrillex"
+DISTURBANCE_NOISE_WHITE_NOISE = DATA_DIR / "icra2025-multiclass-v1-disturbances" / "noise" / "white_noise"
 
-DISTURBANCE_CUP_MIMICKING = DATA_DIR / "icra2025-disturbances" / "robot_empty_cup-human_full_cup" /"human_matches_robot_movements"
-DISTURBANCE_CUP_SHAKING = DATA_DIR / "icra2025-disturbances" / "robot_empty_cup-human_full_cup" /"human_shakes_cup"
+DISTURBANCE_CUP_MIMICKING_M6x14 = DATA_DIR / "icra2025-multiclass-v1-disturbances" / "robot_empty_cup-human_3_M6x14_cup" /"human_matches_robot_movements"
+DISTURBANCE_CUP_SHAKING_M6x14 = DATA_DIR / "icra2025-multiclass-v1-disturbances" / "robot_empty_cup-human_3_M6x14_cup" /"human_shakes_cup"
 
-NOVEL_OBJECTS = DATA_DIR / "icra2025-new-objects"
+DISTURBANCE_CUP_MIMICKING_PLAYDOUGH = DATA_DIR / "icra2025-multiclass-v1-disturbances" / "robot_empty_cup-human_playdough_cup" /"human_matches_robot_movements"
+DISTURBANCE_CUP_SHAKING_PLAYDOUGH = DATA_DIR / "icra2025-multiclass-v1-disturbances" / "robot_empty_cup-human_playdough_cup" /"human_shakes_cup"
+
+DISTURBANCE_ROBOT_TAPPING = DATA_DIR / "icra2025-multiclass-v1-disturbances" / "tapping_robot"
+
+# NOVEL_OBJECTS = DATA_DIR / "icra2025-new-objects"
+
 
 LABELS_CSV_PATH = DATA_DIR / "robomic_categories.csv"
 
@@ -33,9 +39,12 @@ validation_sets = {
     "disturbance_noise_red_hot_chillipeppers": DISTURBANCE_NOISE_RED_HOT_CHILLIPEPPERS,
     "disturbance_noise_skrillex": DISTURBANCE_NOISE_SKRILLEX,
     "disturbance_noise_white_noise": DISTURBANCE_NOISE_WHITE_NOISE,
-    "disturbance_cup_mimicking": DISTURBANCE_CUP_MIMICKING,
-    "disturbance_cup_shaking": DISTURBANCE_CUP_SHAKING,
-    "novel_objects": NOVEL_OBJECTS
+    "disturbance_cup_mimicking_m6x14": DISTURBANCE_CUP_MIMICKING_M6x14,
+    "disturbance_cup_shaking_m6x14": DISTURBANCE_CUP_SHAKING_M6x14,
+    "disturbance_cup_mimicking_playdough": DISTURBANCE_CUP_MIMICKING_PLAYDOUGH,
+    "disturbance_cup_shaking_playdough": DISTURBANCE_CUP_SHAKING_PLAYDOUGH,
+    "disturbance_robot_tapping": DISTURBANCE_ROBOT_TAPPING,
+    
 }
 
 def get_validation_set_path(validation_set_name, sensor_type):
@@ -95,8 +104,10 @@ def get_validation_accuracy(model, args, dataset_json_path) -> float:
         os.makedirs(args.exp_dir)
 
     stats,_= validate(model, val_loader, args,"validation")
-    val_acc = np.mean([stat["acc"] for stat in stats])
-    return val_acc
+    val_acc = stats[0]["acc"]
+    confusion_matrix = stats[0]["confusion_matrix"]
+    print(confusion_matrix)
+    return val_acc, confusion_matrix
 
 def wilson_score_interval(correct, n, confidence=0.95):
     from scipy import stats as st
@@ -129,41 +140,93 @@ def wilson_score_interval(correct, n, confidence=0.95):
 
 
 
-def main(mic_checkpoint, laser_checkpoint):
-    mic_model = build_model(mic_checkpoint)
-    laser_model = build_model(laser_checkpoint)
+def main(mic_experiment_dir, laser_experiment_dir):
 
-    mic_args = get_args_from_checkpoint(mic_checkpoint)
-    laser_args = get_args_from_checkpoint(laser_checkpoint)
+    checkpoint_name = "best_audio_model.pth"
+    # checkpoint_name = "audio_model.11.pth"
+
+
+    # find all fold folders, which start with "fold"
+    mic_fold_model_dirs = [d for d in pathlib.Path(mic_experiment_dir).iterdir() if d.is_dir() and d.name.startswith("fold")]
+    mic_models = [d / "models"/ checkpoint_name for d in mic_fold_model_dirs]
+
+    laser_fold_model_dirs = [d for d in pathlib.Path(laser_experiment_dir).iterdir() if d.is_dir() and d.name.startswith("fold")]
+    laser_models = [d / "models"/ checkpoint_name for d in laser_fold_model_dirs]
+
+    models = {
+        f"mic_fold_{i}": mic_models[i] for i in range(len(mic_models))
+    }
+    models.update({
+        f"laser_fold_{i}": laser_models[i] for i in range(len(laser_models))
+    })
 
     accuracies_dict = {}
-    for validation_set_name in validation_sets:
-        mic_dataset_json_path = get_validation_set_path(validation_set_name, "mic")
-        laser_dataset_json_path = get_validation_set_path(validation_set_name, "laser")
-        mic_acc = get_validation_accuracy(mic_model, mic_args, mic_dataset_json_path)
-        laser_acc = get_validation_accuracy(laser_model, laser_args, laser_dataset_json_path)
-        print(f"Validation set: {validation_set_name}")
-        print(f"Accuracy mic: {mic_acc}")
-        print(f"Accuracy laser: {laser_acc}")
-        print(f"---------------------------------")
-        accuracies_dict[validation_set_name] = {"mic": mic_acc, "laser": laser_acc}
+    confusion_matrices_dict = {}
+
+    for checkpoint in models:
+        model = build_model(models[checkpoint])
+        args = get_args_from_checkpoint(models[checkpoint])
+        sensor_type = "mic" if "mic" in checkpoint else "laser"
+        for validation_set_name in validation_sets:
+            mic_dataset_json_path = get_validation_set_path(validation_set_name, sensor_type)
+            val_acc, confusion_matrix = get_validation_accuracy(model, args, mic_dataset_json_path)
+
+            if validation_set_name not in accuracies_dict:
+                accuracies_dict[validation_set_name] = {}
+            accuracies_dict[validation_set_name][checkpoint] = val_acc
+
+            if validation_set_name not in confusion_matrices_dict:
+                confusion_matrices_dict[validation_set_name] = {}
+            confusion_matrices_dict[validation_set_name][checkpoint] = confusion_matrix
 
 
     
+    # average the accuracies over the folds for each set and sensory type
+    for validation_set_name in validation_sets:
+        for sensor_type in ["mic", "laser"]:
+            accuracies = [accuracies_dict[validation_set_name][f"{sensor_type}_fold_{i}"] for i in range(len(mic_models))]
+            mean_accuracy = np.mean(accuracies)
+            accuracies_dict[validation_set_name][sensor_type] = mean_accuracy
+            lower_bound, upper_bound = wilson_score_interval(correct=np.sum(accuracies), n=len(accuracies))
+            accuracies_dict[validation_set_name][f"{sensor_type}_lower_bound"] = lower_bound
+            accuracies_dict[validation_set_name][f"{sensor_type}_upper_bound"] = upper_bound
+            
     with open("validation_accuracies.json", "w") as f:
-        json_dict = {"checkpoints": {"mic": mic_checkpoint, "laser": laser_checkpoint}, "accuracies": accuracies_dict}
+        json_dict = {"checkpoints": {"mic": mic_experiment_dir, "laser": laser_experiment_dir}, "accuracies": accuracies_dict}
+        json.dump(json_dict, f, indent=4)
+
+
+    # aggregate the confusion matrices by summing them
+    for validation_set_name in validation_sets:
+        for sensor_type in ["mic", "laser"]:
+            confusion_matrices = [confusion_matrices_dict[validation_set_name][f"{sensor_type}_fold_{i}"] for i in range(len(mic_models))]
+            confusion_matrix_sum = np.sum(confusion_matrices, axis=0)
+            confusion_matrices_dict[validation_set_name][sensor_type] = confusion_matrix_sum
+
+
+    # recursively crawl into the confusion matrix dict and convert all numpy arrays to lists
+    def convert_numpy_to_list(d):
+        for key, value in d.items():
+            if isinstance(value, dict):
+                convert_numpy_to_list(value)
+            elif isinstance(value, np.ndarray):
+                d[key] = value.tolist()
+    convert_numpy_to_list(confusion_matrices_dict)
+
+    with open("validation_confusion_matrices.json", "w") as f:
+        json_dict = {"checkpoints": {"mic": mic_experiment_dir, "laser": laser_experiment_dir}, "confusion_matrices": confusion_matrices_dict}
         json.dump(json_dict, f, indent=4)
 
 if __name__ == "__main__":
     import argparse
-    mic_checkpoint =""
-    laser_checkpoint = ""
+    mic_experiment_dir =""
+    laser_experiment_dir = ""
     
     # cli using argparse
     argparser = argparse.ArgumentParser()
-    argparser.add_argument("--mic", type=str, required=True, help="Path to the mic checkpoint")
-    argparser.add_argument("--laser", type=str, required=True, help="Path to the laser checkpoint")
+    argparser.add_argument("--mic", type=str, required=True, help="Path to the mic experiment")
+    argparser.add_argument("--laser", type=str, required=True, help="Path to the laser experiment")
     args = argparser.parse_args()
-    mic_checkpoint = args.mic
-    laser_checkpoint = args.laser
-    main(mic_checkpoint, laser_checkpoint)
+    mic_experiment_dir = args.mic
+    laser_experiment_dir = args.laser
+    main(mic_experiment_dir, laser_experiment_dir)

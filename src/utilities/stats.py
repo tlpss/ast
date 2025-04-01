@@ -25,6 +25,10 @@ def calculate_stats(output, target):
     # Accuracy, only used for single-label classification such as esc-50, not for multiple label one such as AudioSet
     acc = metrics.accuracy_score(np.argmax(target, 1), np.argmax(output, 1))
 
+    #confusion matrix:
+    cm = metrics.confusion_matrix(np.argmax(target, 1), np.argmax(output, 1),labels=np.arange(classes_num))
+    
+    
     # Class-wise statistics
     for k in range(classes_num):
 
@@ -46,6 +50,8 @@ def calculate_stats(output, target):
         # FPR, TPR
         (fpr, tpr, thresholds) = metrics.roc_curve(target[:, k], output[:, k])
 
+
+
         save_every_steps = 1000     # Sample statistics to reduce size
         dict = {'precisions': precisions[0::save_every_steps],
                 'recalls': recalls[0::save_every_steps],
@@ -54,7 +60,8 @@ def calculate_stats(output, target):
                 'fnr': 1. - tpr[0::save_every_steps],
                 'auc': auc,
                 # note acc is not class-wise, this is just to keep consistent with other metrics
-                'acc': acc
+                'acc': acc,
+                'confusion_matrix': cm,
                 }
         stats.append(dict)
 

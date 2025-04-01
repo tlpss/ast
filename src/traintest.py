@@ -212,7 +212,7 @@ def train(audio_model, train_loader, test_loader, args):
             if main_metrics == 'acc':
                 best_epoch = epoch
 
-        if cum_mAP > best_cum_mAP:
+        if cum_mAP >= best_cum_mAP:
             best_cum_epoch = epoch
             best_cum_mAP = cum_mAP
 
@@ -224,6 +224,7 @@ def train(audio_model, train_loader, test_loader, args):
             torch.save(audio_model.state_dict(), "%s/models/audio_model.%d.pth" % (exp_dir, epoch))
             if len(train_loader.dataset) > 2e5:
                 torch.save(optimizer.state_dict(), "%s/models/optim_state.%d.pth" % (exp_dir, epoch))
+
 
         scheduler.step()
 
@@ -244,6 +245,9 @@ def train(audio_model, train_loader, test_loader, args):
         per_sample_data_time.reset()
         loss_meter.reset()
         per_sample_dnn_time.reset()
+
+    # save last checkpoint 
+    torch.save(audio_model.state_dict(), "%s/models/audio_model.%d.pth" % (exp_dir, epoch))
 
     # if args.dataset == 'audioset':
     #     if len(train_loader.dataset) > 2e5:
